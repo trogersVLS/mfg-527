@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.Button_runTest = new System.Windows.Forms.Button();
+            this.Button_Run = new System.Windows.Forms.Button();
             this.field_serialNumber = new System.Windows.Forms.TextBox();
             this.label_serialNumber = new System.Windows.Forms.Label();
             this.label_Title = new System.Windows.Forms.Label();
@@ -40,18 +40,18 @@
             this.StatusBar = new System.Windows.Forms.ProgressBar();
             this.check_SingleTest = new System.Windows.Forms.CheckBox();
             this.button3 = new System.Windows.Forms.Button();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.Dropdown_Test_List = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
-            // Button_runTest
+            // Button_Run
             // 
-            this.Button_runTest.Location = new System.Drawing.Point(8, 225);
-            this.Button_runTest.Name = "Button_runTest";
-            this.Button_runTest.Size = new System.Drawing.Size(103, 42);
-            this.Button_runTest.TabIndex = 1;
-            this.Button_runTest.Text = "Run Test";
-            this.Button_runTest.UseVisualStyleBackColor = true;
-            this.Button_runTest.Click += new System.EventHandler(this.button_runTest_Click);
+            this.Button_Run.Location = new System.Drawing.Point(8, 225);
+            this.Button_Run.Name = "Button_Run";
+            this.Button_Run.Size = new System.Drawing.Size(103, 42);
+            this.Button_Run.TabIndex = 1;
+            this.Button_Run.Text = "Run";
+            this.Button_Run.UseVisualStyleBackColor = true;
+            this.Button_Run.Click += new System.EventHandler(this.Button_Run_Click);
             // 
             // field_serialNumber
             // 
@@ -83,7 +83,6 @@
             this.label_Title.TabIndex = 5;
             this.label_Title.Text = "Control Board Test";
             this.label_Title.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.label_Title.Click += new System.EventHandler(this.Label_Title_Click);
             // 
             // check_program
             // 
@@ -159,6 +158,7 @@
             this.check_SingleTest.Text = "Single Test";
             this.check_SingleTest.UseVisualStyleBackColor = true;
             this.check_SingleTest.Visible = false;
+            this.check_SingleTest.CheckedChanged += new System.EventHandler(this.Check_SingleTest_CheckedChanged);
             // 
             // button3
             // 
@@ -170,14 +170,14 @@
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Visible = false;
             // 
-            // comboBox1
+            // Dropdown_Test_List
             // 
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(116, 155);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(121, 21);
-            this.comboBox1.TabIndex = 15;
-            this.comboBox1.Visible = false;
+            this.Dropdown_Test_List.FormattingEnabled = true;
+            this.Dropdown_Test_List.Location = new System.Drawing.Point(116, 155);
+            this.Dropdown_Test_List.Name = "Dropdown_Test_List";
+            this.Dropdown_Test_List.Size = new System.Drawing.Size(121, 21);
+            this.Dropdown_Test_List.TabIndex = 15;
+            this.Dropdown_Test_List.Visible = false;
             // 
             // GUI_Main
             // 
@@ -186,7 +186,7 @@
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(219)))), ((int)(((byte)(220)))), ((int)(((byte)(222)))));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.ClientSize = new System.Drawing.Size(801, 605);
-            this.Controls.Add(this.comboBox1);
+            this.Controls.Add(this.Dropdown_Test_List);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.check_SingleTest);
             this.Controls.Add(this.StatusBar);
@@ -195,7 +195,7 @@
             this.Controls.Add(this.label_Title);
             this.Controls.Add(this.label_serialNumber);
             this.Controls.Add(this.console_debugOutput);
-            this.Controls.Add(this.Button_runTest);
+            this.Controls.Add(this.Button_Run);
             this.Controls.Add(this.field_serialNumber);
             this.Controls.Add(this.check_test);
             this.Controls.Add(this.check_program);
@@ -209,7 +209,7 @@
 
         #endregion
 
-        private System.Windows.Forms.Button Button_runTest;
+        private System.Windows.Forms.Button Button_Run;
         private System.Windows.Forms.TextBox field_serialNumber;
         private System.Windows.Forms.Label label_serialNumber;
         private System.Windows.Forms.Label label_Title;
@@ -221,7 +221,7 @@
         private System.Windows.Forms.ProgressBar StatusBar;
         private System.Windows.Forms.CheckBox check_SingleTest;
         private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.ComboBox Dropdown_Test_List;
     }
 }
 

@@ -13,9 +13,9 @@ using ErrorDefs;
 using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.FileIO;
 
+
 namespace mfg_527
 {
-    
     public class NameValue
     {
 
@@ -60,17 +60,9 @@ namespace mfg_527
             
             
             this.gpio_board = new MccDaq.MccBoard(0);
-            
+
             InitUL();
-
-                
-
-
-
-            //this.gpio_board.DBitOut(PortNum, 3, DigitalLogicState.High );
-
-        
-
+            
         }
 
         public void setBit(DigitalPortType port, int bit, DigitalLogicState val)
@@ -180,6 +172,7 @@ namespace mfg_527
         private GPIO _gpio;
         public List<TestStep> Tests = new List<TestStep>();
         private readonly ConcurrentQueue<string> _queue;
+        private bool cancel_request = false;
 
 
 
@@ -193,7 +186,7 @@ namespace mfg_527
         public FunctionalTest(ConcurrentQueue<string> _queue, string serial) {
             
             //Create the list of tests needed on startup
-            int y = this.getTests();
+            this.getTests();
 
             //Create the queue used for passing messages between threads
             this._queue = _queue;
@@ -218,6 +211,41 @@ namespace mfg_527
 
             //TODO: Add the destructor tasks
         }
+        private void ClearInput()
+        {
+            string message;
+            while (!this._queue.IsEmpty)
+            {
+                //Queue is not empty. Pending inputs or a pending cancel. Need to check to see if it is a cancel
+                this._queue.TryPeek(out message);
+                if(message != "cancel")
+                {
+                    //If message is not a cancel, remove the message. Don't care if it's there 
+                    this._queue.TryDequeue(out message);
+                }
+                else
+                {
+                    //Message is a cancel, need to exit function so that the program can read the message
+                    this.cancel_request = true;
+                    break;
+                }
+
+            }
+            return;
+        }
+        private string ReceiveInput()
+        {
+            string message;
+
+            while (this._queue.IsEmpty)
+            {
+                //Do nothing, block until a message is received.
+            }
+            this._queue.TryDequeue(out message);
+            
+            return message;
+
+        }
         /************************************************************************************************************
          * RunTest() - Runs the list of tests determined by the functional test
          * 
@@ -237,11 +265,13 @@ namespace mfg_527
                 this._queue.TryDequeue(out str);
                 if (str == "cancel")
                 {
+                    //progress.Report(100);
                     break;
                 }
                 else
                 {
-                    Task.Delay(500).Wait();
+                    //TODO: Remove this delay when tests are added
+                    Task.Delay(100).Wait();
                     var param = new object[] { message, test.lowerBound, test.upperBound };
                     message.Report("Starting " + test.testinfo.Name);   //Indicate which test is being run
                     progress.Report((i * 100) / (TestList.Count)); // Indicate the progress made
@@ -262,7 +292,7 @@ namespace mfg_527
          * **********************************************************************************************************/
         public bool  Program(IProgress<float> progress, IProgress<string> message)
         {
-            //TODO: add code to Confirm that Flashpro is installed in the correct place\
+            //TODO: add code to Confirm that Flashpro and Uniflash are installed in the correct place
 
    
             bool success;
@@ -277,6 +307,16 @@ namespace mfg_527
                     {
                         success = true;
                         message.Report("Hercules program successful");
+                        if (this.SOM_Program(message))
+                        {
+                            success = true;
+                            message.Report("SOM Programmed okay");
+                        }
+                        else
+                        {
+                            success = false;
+                            message.Report("Failed to program SOM");
+                        }
                     }
                     else
                     {
@@ -299,7 +339,6 @@ namespace mfg_527
         
             return success;
         }
-
         private bool CPLD_Verify(IProgress<string> message)
         {
             string VerifyScriptPath;
@@ -331,7 +370,7 @@ namespace mfg_527
                 Thread.Sleep(2000);
                 message.Report("...");
             }
-            if (CPLD_Success(ResultFilePath, Verify_Success))
+            if (CPLD_LogRead(ResultFilePath, Verify_Success))
             {
                 message.Report("CPLD Verify Successful");
                 success = true;
@@ -376,7 +415,7 @@ namespace mfg_527
                 Thread.Sleep(2000);
                 message.Report("...");
             }
-            if (CPLD_Success(ResultFilePath, Program_Success))
+            if (CPLD_LogRead(ResultFilePath, Program_Success))
             {
                 message.Report("CPLD Program Successful");
                 success = true;
@@ -390,7 +429,7 @@ namespace mfg_527
 
             return success;
         }
-        private bool CPLD_Success(string path, string pass)
+        private bool CPLD_LogRead(string path, string pass)
         {
             bool success;
             string file;
@@ -455,14 +494,21 @@ namespace mfg_527
 
             return success;
         }
-        public void RunStep(TestStep step)
-        {   
-
-            return;
+        private bool SOM_Program(IProgress<string> message)
+        {
+            bool success;
+            if (true)
+            {
+                success = true;
+            }
+            else
+            {
+                success = false;
+            }
+            return success;
         }
 
-
-        private int getTests()
+        private void getTests()
         {
             //Get list of methods in this class
             MethodInfo[] methods = this.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
@@ -499,7 +545,7 @@ namespace mfg_527
                     i++;    
                 }
             }
-            return 1;
+            return;
         }
 
         private int getDMM() {
@@ -552,31 +598,28 @@ namespace mfg_527
 
         private string test_lcd(IProgress<string> message,int upperbound, int lowerbound)
         {
+            //Assumptions - Unit has been powered on
             string str;
-            string result = "UNKN";
+            string result="--";
+
+            //Clear the queue
+            this.ClearInput();
 
             //Blocking until user input is given --> Possible options are: "yes", "no" and "cancel"
-            message.Report("Does the LCD look clear?");
-            while (true) {
-                this._queue.TryDequeue(out str);
+            message.Report("Is the LCD screen clear?");
+            if (!this.cancel_request)
+            {
+                str = ReceiveInput();
                 if (str == "yes")
                 {
                     message.Report("Test Passed!");
                     result = "PASS";
-                    break;
+
                 }
                 else if (str == "no")
                 {
                     message.Report("Test Failed");
                     result = "FAIL";
-                    break;
-                }
-                else if( str == "cancel")
-                {
-                    break;
-                }
-                else {
-                    //Do nothing
                 }
             }
             return result;

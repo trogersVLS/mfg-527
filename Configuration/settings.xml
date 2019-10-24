@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Settings>
+  <config location="VLS" eqid="1111" mfg_code="V" />
+  
+  
+  
+  <Users>
+    <user username="admin" pass ="password"/>
+    <user username="trogers" pass="Mister0wl"/>
+    <user username="mfgoperator" pass="Ventec123!"/>
+  </Users>
+
+</Settings>
+

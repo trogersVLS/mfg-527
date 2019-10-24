@@ -12,170 +12,61 @@ using MccDaq;
 using ErrorDefs;
 using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.FileIO;
+using Ivi.Visa.Interop;
+using System.IO.Ports;
 
 
 namespace mfg_527
 {
-    public class NameValue
-    {
-
-        private string dataName;
-        private string dataValue;
-
-        public NameValue(string dataName, string dataValue)
-        {
-            DataName = dataName;
-            DataValue = dataValue;
-        }
-
-        public string DataName
-        {
-            get { return dataName; }
-            set { dataName = value; }
-        }
-
-        public string DataValue
-        {
-            get { return dataValue; }
-            set { dataValue = value; }
-        }
-
-        public override string ToString()
-        {
-            return dataName;
-        }
-
-    }
-    public class GPIO
-    {
-        MccDaq.MccBoard gpio_board;
-        int numChannels;
-        MccDaq.ErrorInfo err;
-        MccDaq.DigitalPortType[] Ports = {DigitalPortType.FirstPortA, DigitalPortType.FirstPortB, DigitalPortType.FirstPortC,
-                                          DigitalPortType.SecondPortA, DigitalPortType.SecondPortB, DigitalPortType.SecondPortCH, DigitalPortType.SecondPortCL,
-                                          DigitalPortType.ThirdPortA, DigitalPortType.ThirdPortB, DigitalPortType.ThirdPortCH, DigitalPortType.ThirdPortCL };
-        DigitalIO.clsDigitalIO dig_props = new DigitalIO.clsDigitalIO();
-        public GPIO()
-        {
-            
-            
-            this.gpio_board = new MccDaq.MccBoard(0);
-
-            InitUL();
-            
-        }
-
-        public void setBit(DigitalPortType port, int bit, DigitalLogicState val)
-        {
-            this.gpio_board.DBitOut(port, bit, val);
-        }
-
-        public void setPort(DigitalPortType port, ushort val)
-        {
-            this.gpio_board.DOut(port, val);
-        }
-
-        private void InitUL()
-        {
-            //  Initiate error handling
-            //   activating error handling will trap errors like
-            //   bad channel numbers and non-configured conditions.
-            //   Parameters:
-            //     MccDaq.ErrorReporting.PrintAll :all warnings and errors encountered will be printed
-            //     MccDaq.ErrorHandling.StopAll   :if an error is encountered, the program will stop
-
-            clsErrorDefs.ReportError = MccDaq.ErrorReporting.PrintAll;
-            clsErrorDefs.HandleError = MccDaq.ErrorHandling.StopAll;
-            this.err = MccDaq.MccService.ErrHandling
-                (ErrorReporting.PrintAll, ErrorHandling.StopAll);
-
-            this.err = this.gpio_board.BoardConfig.GetDiNumDevs(out this.numChannels);
-
-
-
-            if (this.numChannels != 0)
-            {
-                for (int i = 0; i < (numChannels - 1); i++)
-                {
-                    err = this.gpio_board.DConfigPort(Ports[i], DigitalPortDirection.DigitalOut);
-                    this.setPort(Ports[i], 0);
-                }
-            }
-            else
-            {
-                //GPIO is not configured
-            }
-        }
-    }
-    public class DMM
-    {   
-
-        public DMM()
-        {
-
-        }
-    }
-    public class PPS
-    {
-        public PPS()
-        {
-
-        }
-    }
-    public class TestStep
+    public struct TestData
     {
         public int step;
         public string name;
+        public string method_name;
         public bool qual;
-        public int lowerBound;
-        public int upperBound;
+        public int upper;
+        public int lower;
+        public int measurement;
+        public bool pass;
+        // Pointer to the function to invoke
         public MethodInfo testinfo;
-        
 
-        public TestStep(int number, string name, bool qual, int lowerBound, int upperBound, MethodInfo function)
+
+        public TestData(int step, string name, string method_name, bool qual, int upper, int lower, int measurement, bool pass, MethodInfo function)
         {
-            this.step = number;
+            this.step = step;
             this.name = name;
+            this.method_name = method_name;
             this.qual = qual;
-            this.lowerBound = lowerBound;
-            this.upperBound = upperBound;
+            this.upper = upper;
+            this.lower = lower;
+            this.measurement = measurement;
+            this.pass = pass;
             this.testinfo = function;
+            
         }
-
     }
-    public class TestResult
+/******************************************************************************************************************************************
+ *                                               Functional Test Class
+ ******************************************************************************************************************************************/
+    public partial class FunctionalTest
     {
-        public TestResult(int number, string name, bool pass, int measure)
-        {
-            StepNumber = number;
-            Name = name;
-            Result = pass;
-            Measurement = measure;
-        }
-        public TestResult(int number, string name, bool pass)
-        {
+        //Test specific data --> To be stored in results file and in database
+        private string serial;             //Test serial number
+        private string location;
+        private int eqid;
+        private int user_id;
+        private DateTime date;
+        private DateTime time;
 
-        }
 
-        public int StepNumber { get; set; }
-        public string Name { get; set; }
-        public bool Result { get; set; }
-        public int Measurement { get; set; }
-    }
-    public class FunctionalTest
-    {
-
-        public string SerialNumber;             //Test serial number
-        public string status_msg = "Ready";
-        private PPS _pps;
-        private DMM _dmm;
         private GPIO _gpio;
-        public List<TestStep> Tests = new List<TestStep>();
+        public List<TestData> Tests = new List<TestData>();
         private readonly ConcurrentQueue<string> _queue;
         private bool cancel_request = false;
 
 
-
+        
         /************************************************************************************************************
          * Functional Test Class Constructor
          * 
@@ -183,20 +74,16 @@ namespace mfg_527
          *             - String serial--> The serial number of the board in which this test has been initialized
          * 
          * **********************************************************************************************************/
-        public FunctionalTest(ConcurrentQueue<string> _queue, string serial) {
+        public FunctionalTest(ConcurrentQueue<string> _queue, string serial, string location, int eqid, string user_id) {
             
             //Create the list of tests needed on startup
-            this.getTests();
+            this.GetTests();
 
             //Create the queue used for passing messages between threads
             this._queue = _queue;
 
             //Initialize class variables
-            this.SerialNumber = serial;
-
-            //Connect to test equipment
-            this._pps = new PPS();
-            this._dmm = new DMM();
+            this.serial = serial;
             this._gpio = new GPIO();
         }
         /************************************************************************************************************
@@ -211,6 +98,21 @@ namespace mfg_527
 
             //TODO: Add the destructor tasks
         }
+
+/******************************************************************************************************************************************
+ *                  MESSAGE PASSING UTILITIES
+ ******************************************************************************************************************************************/
+
+        /************************************************************************************************************
+         * ClearInput
+         * 
+         * Function: Clears the message buffer between the main thread and the test thread. 
+         * 
+         * Arguments: None
+         * 
+         * Returns: None
+         * 
+         * **********************************************************************************************************/
         private void ClearInput()
         {
             string message;
@@ -233,6 +135,16 @@ namespace mfg_527
             }
             return;
         }
+        /************************************************************************************************************
+         * ReceiveInput
+         * 
+         * Function: Pops a message from the queue or waits until the queue has received a message.
+         * 
+         * Arguments: None
+         * 
+         * Returns: string message - message popped from the queue.
+         * 
+         * **********************************************************************************************************/
         private string ReceiveInput()
         {
             string message;
@@ -246,6 +158,12 @@ namespace mfg_527
             return message;
 
         }
+
+
+/******************************************************************************************************************************************
+*                                               TEST RUNNING FUNCTIONS
+******************************************************************************************************************************************/
+
         /************************************************************************************************************
          * RunTest() - Runs the list of tests determined by the functional test
          * 
@@ -253,14 +171,14 @@ namespace mfg_527
          *             - message  --> Progress interface variable. Used to update the text in the output box.  
          *             - TestList --> List of TestStep. Used to tell RunTest which tests need to be run.
          * **********************************************************************************************************/
-        public void RunTest(IProgress<float> progress, IProgress<string> message, List<TestStep> TestList)
+        public void RunTest(IProgress<int> progress, IProgress<string> message, List<TestData> TestList)
         {
             int i = 0;
             string str;
             
             // For each test in the test list, run the function
             // Pass the message object to each test so that the tests can update the display as needed
-            foreach(TestStep test in TestList)
+            foreach(TestData test in TestList)
             {
                 this._queue.TryDequeue(out str);
                 if (str == "cancel")
@@ -272,7 +190,7 @@ namespace mfg_527
                 {
                     //TODO: Remove this delay when tests are added
                     Task.Delay(100).Wait();
-                    var param = new object[] { message, test.lowerBound, test.upperBound };
+                    var param = new object[] { message, test.upper, test.lower };
                     message.Report("Starting " + test.testinfo.Name);   //Indicate which test is being run
                     progress.Report((i * 100) / (TestList.Count)); // Indicate the progress made
 
@@ -290,7 +208,7 @@ namespace mfg_527
          *             - message  --> Progress interface variable. Used to update the text in the output box.  
          *             
          * **********************************************************************************************************/
-        public bool  Program(IProgress<float> progress, IProgress<string> message)
+        public bool  Program(IProgress<int> progress, IProgress<string> message)
         {
             //TODO: add code to Confirm that Flashpro and Uniflash are installed in the correct place
 
@@ -339,176 +257,23 @@ namespace mfg_527
         
             return success;
         }
-        private bool CPLD_Verify(IProgress<string> message)
-        {
-            string VerifyScriptPath;
-            string ResultFilePath;
-            string Verify_CMD;
-            string Verify_Success = "Executing action VERIFY PASSED";
-            bool success;
-            //The path to the CPLD_Program script is always two directories up from the executing path.
-            VerifyScriptPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            VerifyScriptPath = VerifyScriptPath.Remove(VerifyScriptPath.LastIndexOf("\\")); //Up one directory
-            VerifyScriptPath = VerifyScriptPath.Remove(VerifyScriptPath.LastIndexOf("\\")); // Up two directories
-            ResultFilePath = VerifyScriptPath + "\\ProgramLoad\\CPLDLoad\\Results\\VerifyResult.txt";
-            VerifyScriptPath = VerifyScriptPath + "\\ProgramLoad\\CPLDLoad\\cpld_verify.tcl";
 
-            Verify_CMD = "script:" + VerifyScriptPath + " logfile:" + ResultFilePath;
+/******************************************************************************************************************************************
+ *                                               DATA ANALYSIS FUNCTIONS
+ ******************************************************************************************************************************************/
 
-            System.Diagnostics.Process cpld_cmd = new System.Diagnostics.Process();
-            System.Diagnostics.ProcessStartInfo cpld_info = new System.Diagnostics.ProcessStartInfo();
-            cpld_info.FileName = "C:\\Microsemi\\Program_Debug_v11.9\\bin\\flashpro.exe";
-            cpld_info.Arguments = Verify_CMD;
-            cpld_info.RedirectStandardOutput = true;
-            cpld_info.UseShellExecute = false;
-            cpld_cmd.StartInfo = cpld_info;
-            cpld_cmd.Start();
-            //string output = cpld_cmd.StandardOutput.ReadToEnd();
-            message.Report("Starting programmer ...");
-            while (!File.Exists(ResultFilePath))
-            {
-                Thread.Sleep(2000);
-                message.Report("...");
-            }
-            if (CPLD_LogRead(ResultFilePath, Verify_Success))
-            {
-                message.Report("CPLD Verify Successful");
-                success = true;
-            }
-            else
-            {
-                message.Report("CPLD Verify unsuccessful");
-                success = false;
-            }
-
-
-            return success;
-        }
-        private bool CPLD_Program(IProgress<string> message)
-        {
-            string ProgramScriptPath;
-            string ResultFilePath;
-            string Program_CMD;
-            string Program_Success = "Executing action PROGRAM PASSED";
-            bool success;
-            //The path to the CPLD_Program script is always two directories up from the executing path.
-            ProgramScriptPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            ProgramScriptPath = ProgramScriptPath.Remove(ProgramScriptPath.LastIndexOf("\\")); //Up one directory
-            ProgramScriptPath = ProgramScriptPath.Remove(ProgramScriptPath.LastIndexOf("\\")); // Up two directories
-            ResultFilePath = ProgramScriptPath + "\\ProgramLoad\\CPLDLoad\\Results\\ProgramResult.txt";
-            ProgramScriptPath = ProgramScriptPath + "\\ProgramLoad\\CPLDLoad\\cpld_program.tcl";
-
-            Program_CMD =  "script:" + ProgramScriptPath + " logfile:" + ResultFilePath;
-
-            System.Diagnostics.Process cpld_cmd = new System.Diagnostics.Process();
-            System.Diagnostics.ProcessStartInfo cpld_info = new System.Diagnostics.ProcessStartInfo();
-            cpld_info.FileName = "C:\\Microsemi\\Program_Debug_v11.9\\bin\\flashpro.exe";
-            cpld_info.Arguments = Program_CMD;
-            cpld_info.RedirectStandardOutput = true;
-            cpld_info.UseShellExecute = false;
-            cpld_cmd.StartInfo = cpld_info;
-            cpld_cmd.Start();
-            //string output = cpld_cmd.StandardOutput.ReadToEnd();
-            message.Report("Starting programmer ...");
-            while (!File.Exists(ResultFilePath))
-            {
-                Thread.Sleep(2000);
-                message.Report("...");
-            }
-            if (CPLD_LogRead(ResultFilePath, Program_Success))
-            {
-                message.Report("CPLD Program Successful");
-                success = true;
-            }
-            else
-            {
-                message.Report("CPLD Program unsuccessful");
-                success = false;
-            }
-           
-
-            return success;
-        }
-        private bool CPLD_LogRead(string path, string pass)
-        {
-            bool success;
-            string file;
-
-            file = File.ReadAllText(path);
-
-            if (file.Contains(pass)){
-                success = true;
-            }
-            else
-            {
-                success = false;
-            }
-
-            File.Delete(path);
-            return success;
-        }
-        private bool Hercules_Program(IProgress<string> message)
-        {
-            string HerculesScriptPath;
-            string Hercules_CMD;
-            string cmd_output;
-            
-            bool success;
-            //The path to the CPLD_Program script is always two directories up from the executing path.
-            HerculesScriptPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            HerculesScriptPath = HerculesScriptPath.Remove(HerculesScriptPath.LastIndexOf("\\")); //Up one directory
-            HerculesScriptPath = HerculesScriptPath.Remove(HerculesScriptPath.LastIndexOf("\\")); // Up two directories
-            HerculesScriptPath = HerculesScriptPath + "\\ProgramLoad\\HerculesLoad\\dslite.bat";
-
-            Hercules_CMD = "/c " + HerculesScriptPath;
-
-            System.Diagnostics.Process cmd = new System.Diagnostics.Process();
-            System.Diagnostics.ProcessStartInfo cmd_info = new System.Diagnostics.ProcessStartInfo("cmd");
-            cmd_info.FileName = "cmd.exe";
-            cmd_info.Arguments = Hercules_CMD;
-            cmd_info.CreateNoWindow = true;
-            cmd_info.RedirectStandardOutput = true;
-            cmd_info.RedirectStandardError = true;
-            cmd_info.UseShellExecute = false;
-            cmd_info.WorkingDirectory = HerculesScriptPath.Remove(HerculesScriptPath.LastIndexOf("\\"));
-            cmd.StartInfo = cmd_info;
-            message.Report("Starting Hercules programmer ...");
-            cmd.Start();
-            
-            
-           
-            cmd_output = cmd.StandardOutput.ReadToEnd();
-
-            message.Report("Programmer exit");
-            
-
-            if (cmd_output.Contains("Program verification successful"))
-            {
-                success = true;
-            }
-            else
-            {
-                success = false;
-            }
-
-
-            return success;
-        }
-        private bool SOM_Program(IProgress<string> message)
-        {
-            bool success;
-            if (true)
-            {
-                success = true;
-            }
-            else
-            {
-                success = false;
-            }
-            return success;
-        }
-
-        private void getTests()
+        /*
+         * GetTests
+         * 
+         * Function: Reads from the specs.txt file to generate a list of tests that are available to the user. This list is the tests that will
+         * run during a full functional test.
+         * 
+         * Arguments: None
+         * 
+         * Returns: None - Update the class variable Tests
+         *
+         */
+        private void GetTests()
         {
             //Get list of methods in this class
             MethodInfo[] methods = this.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
@@ -519,285 +284,39 @@ namespace mfg_527
             {
                 parser.TextFieldType = FieldType.Delimited;
                 parser.SetDelimiters(",");
-                int i = 0;
+                int step_num = 0;
                 string[] row = parser.ReadFields();
 
                 while (!parser.EndOfData)
                 {
                     row = parser.ReadFields();
                     string name = row[0];
-                    if (row[1].ToLower() == "yes"){
+                    string method_name = row[1];
+                    if (row[2].ToLower() == "yes"){
                         qual = true;
                     }
                     else
                     {
                         qual = false;
                     }
-                    for(int j = 0; j<methods.Length;j++){
+
+                    int upper = Convert.ToInt32(row[3]);
+                    int lower = Convert.ToInt32(row[4]);
+
+                    for (int j = 0; j<methods.Length;j++){
                         
-                        if (methods[j].Name == name){
+                        if (methods[j].Name == method_name){
                             function = methods[j];
                             break;
                         }
                     }
-                    TestStep step = new TestStep(i, name, qual, Convert.ToInt32(row[2]), Convert.ToInt32(row[3]), function);
+                    TestData step = new TestData(step_num, name, method_name, qual, upper, lower, 0, false, function);
                     this.Tests.Add(step);
-                    i++;    
+                    step_num++;    
                 }
             }
             return;
         }
 
-        private int getDMM() {
-
-            return 1;
-        }
-
-        private int getPPS() {
-
-            return 1;
-        }
-
-        private int test_software_install(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_touch_cal(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-
-        private int test_mfg_install(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-
-        private int test_power_on(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-
-        private string test_pre_use(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            string str;
-            string result = "UNKN";
-            message.Report("Start the pre-use test");
-            while (!_queue.TryDequeue(out str)) ;
-            if (str == "yes")
-            {
-                message.Report("Test Passed!");
-                result = "PASS";
-            }
-            else if (str == "no")
-            {
-                message.Report("Test Failed");
-                result = "FAIL";
-            }
-            return result;
-        }
-
-        private string test_lcd(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            //Assumptions - Unit has been powered on
-            string str;
-            string result="--";
-
-            //Clear the queue
-            this.ClearInput();
-
-            //Blocking until user input is given --> Possible options are: "yes", "no" and "cancel"
-            message.Report("Is the LCD screen clear?");
-            if (!this.cancel_request)
-            {
-                str = ReceiveInput();
-                if (str == "yes")
-                {
-                    message.Report("Test Passed!");
-                    result = "PASS";
-
-                }
-                else if (str == "no")
-                {
-                    message.Report("Test Failed");
-                    result = "FAIL";
-                }
-            }
-            return result;
-        }
-
-        private int test_3V3_HOT(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-
-        private int test_5V0_HOT(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-
-        private int test_5V0_SMPS(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-
-        private int test_12V0_SMPS(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-
-        private int test_3V3_SMPS(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-
-        private int test_1V2_SMPS(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-
-        private int test_3V3_LDO(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_2V048_VREF(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_30V0_SMPS(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_36V0_SMPS(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_spi1_bus(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_i2c_vent(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_blower(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_exhalation(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_dac(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_sov(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_oxygen(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_extO2_on(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_exto2_off(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_cough(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_neb(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_suction(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_low_fan_volt(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_low_fan_freq(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_high_fan_volt(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_high_fan_freq(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_alarm_silence(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_ambient_pressure(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_ambient_temperature(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_microphone(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_speaker(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_piezo(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external_ac(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_internal_battery(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external_battery_1(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external_battery_2(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_internal_chg_cc(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_internal_chg_cv(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external1_chg_cc(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external1_chg_cv(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external2_chg_cc(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external2_chg_cv(IProgress<string> message,int upperbound, int lowerbound)
-        {
-            return 1;
-        }
     }
 }

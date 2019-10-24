@@ -1,4 +1,12 @@
-﻿using System;
+﻿/* Program.cs
+ * - Main entry point of program
+ * 
+ * Author: Taylor Rogers
+ * Date: 10/23/2019
+ * 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,14 +21,9 @@ namespace mfg_527
         /// </summary>
         [STAThread]
         static void Main()
-        {
+        {   
 
-            //Create the configurations needed
-
-
-            //Create the functional test class
-
-
+            
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new GUI_Main());

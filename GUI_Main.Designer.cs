@@ -29,18 +29,18 @@
         private void InitializeComponent()
         {
             this.Button_Run = new System.Windows.Forms.Button();
-            this.field_serialNumber = new System.Windows.Forms.TextBox();
+            this.Field_SerialNumber = new System.Windows.Forms.TextBox();
             this.label_serialNumber = new System.Windows.Forms.Label();
-            this.label_Title = new System.Windows.Forms.Label();
-            this.check_program = new System.Windows.Forms.CheckBox();
-            this.check_test = new System.Windows.Forms.CheckBox();
+            this.Check_Program = new System.Windows.Forms.CheckBox();
+            this.Check_FullTest = new System.Windows.Forms.CheckBox();
             this.console_debugOutput = new System.Windows.Forms.RichTextBox();
             this.Button_Yes = new System.Windows.Forms.Button();
             this.Button_No = new System.Windows.Forms.Button();
             this.StatusBar = new System.Windows.Forms.ProgressBar();
-            this.check_SingleTest = new System.Windows.Forms.CheckBox();
-            this.button3 = new System.Windows.Forms.Button();
+            this.Check_SingleTest = new System.Windows.Forms.CheckBox();
             this.Dropdown_Test_List = new System.Windows.Forms.ComboBox();
+            this.Label_User = new System.Windows.Forms.Label();
+            this.Label_Username = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // Button_Run
@@ -53,15 +53,14 @@
             this.Button_Run.UseVisualStyleBackColor = true;
             this.Button_Run.Click += new System.EventHandler(this.Button_Run_Click);
             // 
-            // field_serialNumber
+            // Field_SerialNumber
             // 
-            this.field_serialNumber.BackColor = System.Drawing.SystemColors.Window;
-            this.field_serialNumber.Location = new System.Drawing.Point(87, 76);
-            this.field_serialNumber.Name = "field_serialNumber";
-            this.field_serialNumber.Size = new System.Drawing.Size(150, 20);
-            this.field_serialNumber.TabIndex = 3;
-            this.field_serialNumber.TextChanged += new System.EventHandler(this.Field_serialNumber_TextChanged);
-            this.field_serialNumber.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Field_serialNumber_KeyUp);
+            this.Field_SerialNumber.BackColor = System.Drawing.SystemColors.Window;
+            this.Field_SerialNumber.Location = new System.Drawing.Point(87, 76);
+            this.Field_SerialNumber.Name = "Field_SerialNumber";
+            this.Field_SerialNumber.Size = new System.Drawing.Size(150, 20);
+            this.Field_SerialNumber.TabIndex = 3;
+            this.Field_SerialNumber.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Field_SerialNumber_KeyUp);
             // 
             // label_serialNumber
             // 
@@ -71,40 +70,26 @@
             this.label_serialNumber.Size = new System.Drawing.Size(73, 13);
             this.label_serialNumber.TabIndex = 4;
             this.label_serialNumber.Text = "Serial Number";
-            this.label_serialNumber.Click += new System.EventHandler(this.Label1_Click);
             // 
-            // label_Title
+            // Check_Program
             // 
-            this.label_Title.AutoSize = true;
-            this.label_Title.Font = new System.Drawing.Font("Avenir Heavy", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label_Title.Location = new System.Drawing.Point(159, 9);
-            this.label_Title.Name = "label_Title";
-            this.label_Title.Size = new System.Drawing.Size(456, 64);
-            this.label_Title.TabIndex = 5;
-            this.label_Title.Text = "Control Board Test";
-            this.label_Title.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.Check_Program.AutoSize = true;
+            this.Check_Program.Location = new System.Drawing.Point(12, 110);
+            this.Check_Program.Name = "Check_Program";
+            this.Check_Program.Size = new System.Drawing.Size(65, 17);
+            this.Check_Program.TabIndex = 7;
+            this.Check_Program.Text = "Program";
+            this.Check_Program.UseVisualStyleBackColor = true;
             // 
-            // check_program
+            // Check_FullTest
             // 
-            this.check_program.AutoSize = true;
-            this.check_program.Location = new System.Drawing.Point(12, 110);
-            this.check_program.Name = "check_program";
-            this.check_program.Size = new System.Drawing.Size(65, 17);
-            this.check_program.TabIndex = 7;
-            this.check_program.Text = "Program";
-            this.check_program.UseVisualStyleBackColor = true;
-            this.check_program.CheckedChanged += new System.EventHandler(this.Check_program_CheckedChanged);
-            // 
-            // check_test
-            // 
-            this.check_test.AutoSize = true;
-            this.check_test.Location = new System.Drawing.Point(12, 133);
-            this.check_test.Name = "check_test";
-            this.check_test.Size = new System.Drawing.Size(99, 17);
-            this.check_test.TabIndex = 8;
-            this.check_test.Text = "Functional Test";
-            this.check_test.UseVisualStyleBackColor = true;
-            this.check_test.CheckedChanged += new System.EventHandler(this.Check_test_CheckedChanged);
+            this.Check_FullTest.AutoSize = true;
+            this.Check_FullTest.Location = new System.Drawing.Point(12, 133);
+            this.Check_FullTest.Name = "Check_FullTest";
+            this.Check_FullTest.Size = new System.Drawing.Size(99, 17);
+            this.Check_FullTest.TabIndex = 8;
+            this.Check_FullTest.Text = "Functional Test";
+            this.Check_FullTest.UseVisualStyleBackColor = true;
             // 
             // console_debugOutput
             // 
@@ -148,27 +133,17 @@
             this.StatusBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.StatusBar.TabIndex = 12;
             // 
-            // check_SingleTest
+            // Check_SingleTest
             // 
-            this.check_SingleTest.AutoSize = true;
-            this.check_SingleTest.Location = new System.Drawing.Point(12, 157);
-            this.check_SingleTest.Name = "check_SingleTest";
-            this.check_SingleTest.Size = new System.Drawing.Size(79, 17);
-            this.check_SingleTest.TabIndex = 13;
-            this.check_SingleTest.Text = "Single Test";
-            this.check_SingleTest.UseVisualStyleBackColor = true;
-            this.check_SingleTest.Visible = false;
-            this.check_SingleTest.CheckedChanged += new System.EventHandler(this.Check_SingleTest_CheckedChanged);
-            // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(134, 225);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(103, 42);
-            this.button3.TabIndex = 14;
-            this.button3.Text = "Cancel";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Visible = false;
+            this.Check_SingleTest.AutoSize = true;
+            this.Check_SingleTest.Location = new System.Drawing.Point(12, 157);
+            this.Check_SingleTest.Name = "Check_SingleTest";
+            this.Check_SingleTest.Size = new System.Drawing.Size(79, 17);
+            this.Check_SingleTest.TabIndex = 13;
+            this.Check_SingleTest.Text = "Single Test";
+            this.Check_SingleTest.UseVisualStyleBackColor = true;
+            this.Check_SingleTest.Visible = false;
+            this.Check_SingleTest.CheckedChanged += new System.EventHandler(this.Check_SingleTest_CheckedChanged);
             // 
             // Dropdown_Test_List
             // 
@@ -179,29 +154,47 @@
             this.Dropdown_Test_List.TabIndex = 15;
             this.Dropdown_Test_List.Visible = false;
             // 
+            // Label_User
+            // 
+            this.Label_User.AutoSize = true;
+            this.Label_User.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Label_User.Location = new System.Drawing.Point(5, 9);
+            this.Label_User.Name = "Label_User";
+            this.Label_User.Size = new System.Drawing.Size(37, 13);
+            this.Label_User.TabIndex = 16;
+            this.Label_User.Text = "User:";
+            // 
+            // Label_Username
+            // 
+            this.Label_Username.AutoSize = true;
+            this.Label_Username.Location = new System.Drawing.Point(41, 9);
+            this.Label_Username.Name = "Label_Username";
+            this.Label_Username.Size = new System.Drawing.Size(41, 13);
+            this.Label_Username.TabIndex = 17;
+            this.Label_Username.Text = "<User>";
+            // 
             // GUI_Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(219)))), ((int)(((byte)(220)))), ((int)(((byte)(222)))));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.ClientSize = new System.Drawing.Size(801, 605);
+            this.ClientSize = new System.Drawing.Size(805, 605);
+            this.Controls.Add(this.Label_Username);
+            this.Controls.Add(this.Label_User);
             this.Controls.Add(this.Dropdown_Test_List);
-            this.Controls.Add(this.button3);
-            this.Controls.Add(this.check_SingleTest);
+            this.Controls.Add(this.Check_SingleTest);
             this.Controls.Add(this.StatusBar);
             this.Controls.Add(this.Button_No);
             this.Controls.Add(this.Button_Yes);
-            this.Controls.Add(this.label_Title);
             this.Controls.Add(this.label_serialNumber);
             this.Controls.Add(this.console_debugOutput);
             this.Controls.Add(this.Button_Run);
-            this.Controls.Add(this.field_serialNumber);
-            this.Controls.Add(this.check_test);
-            this.Controls.Add(this.check_program);
+            this.Controls.Add(this.Field_SerialNumber);
+            this.Controls.Add(this.Check_FullTest);
+            this.Controls.Add(this.Check_Program);
             this.Name = "GUI_Main";
-            this.Text = "Form1";
-            this.Load += new System.EventHandler(this.GUI_Main_Load);
+            this.Text = "Control Board Test";
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -210,18 +203,18 @@
         #endregion
 
         private System.Windows.Forms.Button Button_Run;
-        private System.Windows.Forms.TextBox field_serialNumber;
+        private System.Windows.Forms.TextBox Field_SerialNumber;
         private System.Windows.Forms.Label label_serialNumber;
-        private System.Windows.Forms.Label label_Title;
-        private System.Windows.Forms.CheckBox check_program;
-        private System.Windows.Forms.CheckBox check_test;
+        private System.Windows.Forms.CheckBox Check_Program;
+        private System.Windows.Forms.CheckBox Check_FullTest;
         private System.Windows.Forms.RichTextBox console_debugOutput;
         private System.Windows.Forms.Button Button_Yes;
         private System.Windows.Forms.Button Button_No;
         private System.Windows.Forms.ProgressBar StatusBar;
-        private System.Windows.Forms.CheckBox check_SingleTest;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.CheckBox Check_SingleTest;
         private System.Windows.Forms.ComboBox Dropdown_Test_List;
+        private System.Windows.Forms.Label Label_User;
+        private System.Windows.Forms.Label Label_Username;
     }
 }
 

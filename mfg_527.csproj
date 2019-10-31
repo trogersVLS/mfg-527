@@ -75,6 +75,8 @@
       <HintPath>packages\System.Data.SQLite.Linq.1.0.111.0\lib\net46\System.Data.SQLite.Linq.dll</HintPath>
     </Reference>
     <Reference Include="System.Diagnostics.Tracing" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Windows" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -86,28 +88,30 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Tests.cs" />
-    <Compile Include="GPIO.cs" />
-    <Compile Include="Test_Equip.cs" />
-    <Compile Include="LoginForm.cs">
+    <Compile Include="Communications\GPIO_Defs.cs" />
+    <Compile Include="Communications\Programmer.cs" />
+    <Compile Include="FunctionalTest\Tests.cs" />
+    <Compile Include="Communications\GPIO.cs" />
+    <Compile Include="Communications\Test_Equip.cs" />
+    <Compile Include="Forms\LoginForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="LoginForm.Designer.cs">
+    <Compile Include="Forms\LoginForm.Designer.cs">
       <DependentUpon>LoginForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="VOCSN_Telnet.cs" />
-    <Compile Include="Digital.cs" />
-    <Compile Include="ErrorDefs.cs" />
-    <Compile Include="FunctionalTest.cs" />
-    <Compile Include="GUI_Main.cs">
+    <Compile Include="Communications\VOCSN_Telnet.cs" />
+    <Compile Include="MccDaqFiles\Digital.cs" />
+    <Compile Include="MccDaqFiles\ErrorDefs.cs" />
+    <Compile Include="FunctionalTest\FunctionalTest.cs" />
+    <Compile Include="Forms\GUI_Main.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="GUI_Main.Designer.cs">
+    <Compile Include="Forms\GUI_Main.Designer.cs">
       <DependentUpon>GUI_Main.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="GUI_Main.resx">
+    <EmbeddedResource Include="Forms\GUI_Main.resx">
       <DependentUpon>GUI_Main.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -119,7 +123,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="LoginForm.resx">
+    <EmbeddedResource Include="Forms\LoginForm.resx">
       <DependentUpon>LoginForm.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
@@ -5313,6 +5317,7 @@
     <Content Include="Configuration\settings.txt" />
     <Content Include="Configuration\specs.txt" />
     <Content Include="Configuration\settings.xml" />
+    <Content Include="Configuration\specs.xml" />
     <Content Include="ProgramLoad\HerculesErase\ccs_base\common\bin\CCReg.dll" />
     <Content Include="ProgramLoad\HerculesErase\ccs_base\common\bin\fsutil.dll" />
     <Content Include="ProgramLoad\HerculesErase\ccs_base\common\bin\MiniDump.dll" />
@@ -6143,6 +6148,7 @@
     <Content Include="ProgramLoad\HerculesLoad\ccs_base\mmWave\pyserial-3.2.1\pyserial.egg-info\SOURCES.txt" />
     <Content Include="ProgramLoad\HerculesLoad\ccs_base\mmWave\pyserial-3.2.1\pyserial.egg-info\top_level.txt" />
     <Content Include="ProgramLoad\HerculesLoad\dpinst_64_eng.exe" />
+    <Content Include="Assets\vls_logo.png" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="BASICFORMATTEDIOLib">
@@ -6163,6 +6169,9 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Database\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

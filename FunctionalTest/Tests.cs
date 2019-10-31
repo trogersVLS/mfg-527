@@ -34,7 +34,8 @@ namespace mfg_527
     *********************************************************************************************************************************************************/
     partial class FunctionalTest
     {
-        /*  CPLD_Verify
+        /*******************************************************************************************************************************  
+         *  CPLD_Verify
          *  
          *  Function: Performs a verification of the CPLD firmware on the board using a TCL Script run using Flashpro.exe
          *      Assumptions: Flashpro.exe must be installed in the default location on the C: drive.
@@ -43,7 +44,7 @@ namespace mfg_527
          *  
          *  Returns: bool success - returns true is the verification is successful, returns false if the verification is not successful
          * 
-         */
+         *******************************************************************************************************************************/
         private bool CPLD_Verify(IProgress<string> message)
         {
             string VerifyScriptPath;
@@ -107,6 +108,8 @@ namespace mfg_527
             string Program_CMD;
             string Program_Success = "Executing action PROGRAM PASSED";
             bool success;
+
+
             //The path to the CPLD_Program script is always two directories up from the executing path.
             ProgramScriptPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             ProgramScriptPath = ProgramScriptPath.Remove(ProgramScriptPath.LastIndexOf("\\")); //Up one directory
@@ -149,7 +152,7 @@ namespace mfg_527
         {
             bool success;
             string file;
-
+            
             file = File.ReadAllText(path);
 
             if (file.Contains(pass))
@@ -224,38 +227,47 @@ namespace mfg_527
             }
             return success;
         }
-        private int test_software_install(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_software_install(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_touch_cal(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-
-        private int test_mfg_install(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_touch_cal(IProgress<string> message, TestData test)
         {
             return 1;
         }
 
-        private int test_power_on(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_mfg_install(IProgress<string> message, TestData test)
         {
             return 1;
         }
 
-        private string test_pre_use(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_power_on(IProgress<string> message, TestData test)
+        {
+            return 1;
+        }
+
+        private string test_pre_use(IProgress<string> message, TestData test)
         {
             //Assumptions - Unit has been powered on
+            //            - Unit is connected to telemetry
+            //            - Unit has an electronic solenoid valve and connected to a burn-in lung
+            //
             string str;
-            string result = "--";
+            string result = "";
+
+            //Confirm assumptions and correct if wrong
+            //Device is powered on
+
+
 
             //Clear the queue
             this.ClearInput();
 
             //Blocking until user input is given --> Possible options are: "yes", "no" and "cancel"
-            message.Report("Perform the pre-use test\r\nDoes the test pass?");
+            message.Report("Follow the on-screen instructions");
             if (!this.cancel_request)
-            {
+            {   
+                //
                 str = ReceiveInput();
                 if (str == "yes")
                 {
@@ -272,7 +284,7 @@ namespace mfg_527
             return result;
         }
 
-        private string test_lcd(IProgress<string> message, int upperbound, int lowerbound)
+        private string test_lcd(IProgress<string> message, TestData test)
         {
             //Assumptions - Unit has been powered on
             string str;
@@ -300,178 +312,185 @@ namespace mfg_527
             }
             return result;
         }
+        private bool test_voltage(IProgress<string> message, TestData test)
+        {
+            string str_value;
+            bool value_available;
+            float upper=0;
+            float lower=0;
+            //Get parameters from test data object
+            value_available = test.parameters.TryGetValue("upper", out str_value);
+            if (value_available)
+            {
+                upper = float.Parse(str_value, System.Globalization.NumberStyles.Float);
+            }
+            
+            value_available = test.parameters.TryGetValue("upper", out str_value);
+            if (value_available)
+            {
+                lower = float.Parse(str_value, System.Globalization.NumberStyles.Float);
+            }
 
-        private int test_3V3_HOT(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
+            if (this.DMM.Connected)
+            {
+                float measured = this.DMM.Get_Volts();
+                try
+                {
+                    message.Report("Measured: " + measured.ToString() + " V");
+
+                    if ((measured < (upper)) && (measured > (lower)))
+                    {
+                        message.Report("Test PASS");
+                    }
+                    else
+                    {
+                        message.Report("Test FAIL");
+                    }
+
+                    //TODO: Log results
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+
+            }
+            else
+            {
+                message.Report("Multimeter is not connected");
+                return false;
+            }
+            
+
         }
 
-        private int test_5V0_HOT(IProgress<string> message, int upperbound, int lowerbound)
+        
+        private int test_spi1_bus(IProgress<string> message, TestData test)
         {
             return 1;
         }
-
-        private int test_5V0_SMPS(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_i2c_vent(IProgress<string> message, TestData test)
         {
             return 1;
         }
-
-        private int test_12V0_SMPS(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_blower(IProgress<string> message, TestData test)
         {
             return 1;
         }
-
-        private int test_3V3_SMPS(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_exhalation(IProgress<string> message, TestData test)
         {
             return 1;
         }
-
-        private int test_1V2_SMPS(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_dac(IProgress<string> message, TestData test)
         {
             return 1;
         }
-
-        private int test_3V3_LDO(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_sov(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_2V048_VREF(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_oxygen(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_30V0_SMPS(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_extO2_on(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_36V0_SMPS(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_exto2_off(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_spi1_bus(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_cough(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_i2c_vent(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_neb(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_blower(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_suction(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_exhalation(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_low_fan_volt(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_dac(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_low_fan_freq(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_sov(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_high_fan_volt(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_oxygen(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_high_fan_freq(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_extO2_on(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_alarm_silence(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_exto2_off(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_ambient_pressure(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_cough(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_ambient_temperature(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_neb(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_microphone(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_suction(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_speaker(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_low_fan_volt(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_piezo(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_low_fan_freq(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_external_ac(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_high_fan_volt(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_internal_battery(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_high_fan_freq(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_external_battery_1(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_alarm_silence(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_external_battery_2(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_ambient_pressure(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_internal_chg_cc(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_ambient_temperature(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_internal_chg_cv(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_microphone(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_external1_chg_cc(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_speaker(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_external1_chg_cv(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_piezo(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_external2_chg_cc(IProgress<string> message, TestData test)
         {
             return 1;
         }
-        private int test_external_ac(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_internal_battery(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external_battery_1(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external_battery_2(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_internal_chg_cc(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_internal_chg_cv(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external1_chg_cc(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external1_chg_cv(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external2_chg_cc(IProgress<string> message, int upperbound, int lowerbound)
-        {
-            return 1;
-        }
-        private int test_external2_chg_cv(IProgress<string> message, int upperbound, int lowerbound)
+        private int test_external2_chg_cv(IProgress<string> message, TestData test)
         {
             return 1;
         }

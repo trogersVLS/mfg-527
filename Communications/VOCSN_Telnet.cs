@@ -8,7 +8,7 @@ using System.Net.Sockets;
 
 namespace mfg_527
 {
-    public class Telnet
+    public class VLS_Tlm
     {
         int cmd_port = 5000;
         int shell_port = 23;
@@ -16,21 +16,21 @@ namespace mfg_527
 
         TcpClient vocsn_cmd;
         NetworkStream stream_cmd;
-        bool connected = false;
+        bool Connected;
         string _ip_address;
-        public Telnet(string _ip_address)
+        public VLS_Tlm(string _ip_address)
         {
             this._ip_address = _ip_address;
             try
             {
                 this.Connect(this._ip_address);
             }
-            catch (Exception e)
+            catch
             {
-                this.connected = false;
+                this.Connected = false;
             }
         }
-        ~Telnet()
+        ~VLS_Tlm()
         {
             this.Close();
         }
@@ -43,21 +43,27 @@ namespace mfg_527
             String response = "";
             int tempByte;
 
-            while (true)
+            if (this.Connected)
             {
-                tempByte = this.stream_cmd.ReadByte();
-                if (tempByte != (-1))
+                while (true)
                 {
+                    tempByte = this.stream_cmd.ReadByte();
+                    if (tempByte != (-1))
+                    {
 
-                    response += (char)tempByte;
-                }
-                if (response.Contains(str))
-                {
-                    break;
-                }
+                        response += (char)tempByte;
+                    }
+                    if (response.Contains(str))
+                    {
+                        break;
+                    }
 
+                }
             }
-
+            else
+            {
+                response = null;
+            }
             return response;
 
         }
@@ -101,24 +107,23 @@ namespace mfg_527
                 bytes = this.stream_cmd.Read(response, 0, response.Length);
                 responseString = System.Text.Encoding.ASCII.GetString(response, 0, bytes);
 
+
                 if (bytes == 0 || responseString != "$vserver> ")
                 {
                     Console.WriteLine("Unable to connect");
+                    this.Connected = false;
+                }
+                else
+                {
+                    this.Connected = true;
                 }
             }
-            catch (ArgumentNullException e)
+            catch 
             {
-                Console.WriteLine("ArgumentNullException: {0}", e);
             }
-            catch (SocketException e)
-            {
-                Console.WriteLine("SocketException: {0}", e);
-            }
-
 
             return true;
         }
-
 
         private void Close()
         {
@@ -126,8 +131,9 @@ namespace mfg_527
             {
                 this.Command("exit");
                 this.vocsn_cmd.Close();
+                this.Connected = false;
             }
-            catch (Exception e)
+            catch 
             {
 
             }
